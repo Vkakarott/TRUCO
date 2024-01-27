@@ -2,6 +2,42 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
+
+// Tamanho do baralho
+#define TAMANHO_BARALHO 27
+
+// Tamanho da mão de cada jogador por rodada
+#define TAMANHO_MAO 3
+
+// Número de pontos para vencer o jogo
+#define PONTOS_PARA_VITORIA 12
+
+// Número de jopgadores
+#define NUMERO_JOGADORES 4
+
+char *display[30][65];
+char *menu[7][15] = {
+    {"┏", "━", "━", "━", "━", "━", "━", "━", "━", "━", "━", "━", "━", "━", "┓"},
+    {"┃", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "┃"},
+    {"┃", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "┃"},
+    {"┃", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "┃"},
+    {"┃", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "┃"},
+    {"┃", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "┃"},
+    {"┗", "━", "━", "━", "━", "━", "━", "━", "━", "━", "━", "━", "━", "━", "┛"}
+};
+
+int i, j;
+
+void Display(){
+    system("clear");
+    for (i = 0; i < 30; i++){
+        for (j = 0; j < 65; j++){
+            printf("%s", display[i][j]);
+        }
+        printf("\n");
+    }
+}
 
 //struct para armazenar as cartas
 typedef struct {
@@ -13,14 +49,11 @@ typedef struct {
 
 Carta baralho[27];
 
-// Tamanho do baralho
-#define TAMANHO_BARALHO 27
-
-// Tamanho da mão de cada jogador por rodada
-#define TAMANHO_MAO 3
-
-// Número de pontos para vencer o jogo
-#define PONTOS_PARA_VITORIA 12
+typedef struct {
+    char nome[20];
+    int pontos;
+    Carta mao[TAMANHO_MAO];
+} Jogador;
 
 void embaralhar(){
     srand(time(NULL));
@@ -58,14 +91,37 @@ void gerarBaralho(){
     fclose(arq);
 }
 
+Jogador jogadores[NUMERO_JOGADORES];
+
+void distribuir(Jogador *jogadores, int jogadorAtual){
+    if (jogadorAtual == NUMERO_JOGADORES) return;
+    for (i = 0; i < TAMANHO_MAO; i++){
+        jogadores[jogadorAtual].mao[i] = baralho[j];
+        j++;
+    }
+    distribuir(jogadores, jogadorAtual+1);
+}
+
 int main(){
     gerarBaralho();
-    for (int i = 0; i < 27; i++){
-        printf("%s %s %s %d\n", baralho[i].nome, baralho[i].carta, baralho[i].nipe, baralho[i].valor);
+    // iniciar display
+    for(i = 0; i < 30; i++){
+        for(j = 0; j < 65; j++){
+            display[i][j] = "█";
+        }
     }
-    printf("\n");
     embaralhar();
-    for (int i = 0; i < 27; i++){
-        printf("%s %s %s %d\n", baralho[i].nome, baralho[i].carta, baralho[i].nipe, baralho[i].valor);
+    strcpy(jogadores[0].nome, "jogador 1");
+    strcpy(jogadores[1].nome, "jogador 2");
+    strcpy(jogadores[2].nome, "jogador 3");
+    strcpy(jogadores[3].nome, "jogador 4");
+    j = 0;
+    distribuir(jogadores, 0);
+    for (i = 0; i < NUMERO_JOGADORES; i++){
+        printf("%s\n", jogadores[i].nome);
+        for (j = 0; j < TAMANHO_MAO; j++){
+            printf("%s %s %s %d\n", jogadores[i].mao[j].nome, jogadores[i].mao[j].carta, jogadores[i].mao[j].nipe, jogadores[i].mao[j].valor);
+        }
+        printf("\n");
     }
 }
