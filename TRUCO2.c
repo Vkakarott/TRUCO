@@ -3,13 +3,24 @@
 #include <string.h>
 #include <time.h>
 
+//struct para armazenar as cartas
 typedef struct {
-    char carta[20];
-    char nipe[10];
+    char nome[20];
+    char carta[2];
+    char nipe[5];
     int valor;
 } Carta ;
 
 Carta baralho[27];
+
+// Tamanho do baralho
+#define TAMANHO_BARALHO 27
+
+// Tamanho da mão de cada jogador por rodada
+#define TAMANHO_MAO 3
+
+// Número de pontos para vencer o jogo
+#define PONTOS_PARA_VITORIA 12
 
 void embaralhar(){
     srand(time(NULL));
@@ -29,7 +40,7 @@ void embaralhar(){
 
 void gerarBaralho(){
     FILE *arq;
-    char linha[100];
+    char linha[20];
     int i = 0;
 
     arq = fopen("baralho.bin", "rb");
@@ -40,7 +51,7 @@ void gerarBaralho(){
     }
 
     while (fgets(linha, sizeof(linha), arq) != NULL){
-        sscanf(linha, "%s %s %d", baralho[i].carta, baralho[i].nipe, &baralho[i].valor);
+        sscanf(linha, "%s %s %s %d", baralho[i].nome, baralho[i].carta, baralho[i].nipe, &baralho[i].valor);
         i++;
     }
 
@@ -50,11 +61,11 @@ void gerarBaralho(){
 int main(){
     gerarBaralho();
     for (int i = 0; i < 27; i++){
-        printf("%s %s %d\n", baralho[i].carta, baralho[i].nipe, baralho[i].valor);
+        printf("%s %s %s %d\n", baralho[i].nome, baralho[i].carta, baralho[i].nipe, baralho[i].valor);
     }
     printf("\n");
     embaralhar();
     for (int i = 0; i < 27; i++){
-        printf("%s %s %d\n", baralho[i].carta, baralho[i].nipe, baralho[i].valor);
+        printf("%s %s %s %d\n", baralho[i].nome, baralho[i].carta, baralho[i].nipe, baralho[i].valor);
     }
 }

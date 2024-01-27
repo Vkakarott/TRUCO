@@ -32,21 +32,36 @@ int main(){
         {"│", " ", " ", " ", " ", " ", " ", " ", " ", "│", " ", "│", " ", "│" },
         {"╰", "─", "─", "─", "─", "─", "─", "─", "─", "╯", "─", "╯", "─", "╯" }
     };
+    char *car[4][4] = {
+        {"╭", "─", "─", "╮"},
+        {"│", " ", " ", "│"},
+        {"│", " ", " ", "│"},
+        {"╰", "─", "─", "╯"}
+    };
+
     for(i = 0; i < 30; i++){
         for(j = 0; j < 85; j++){
             dispay[i][j] = " ";
         }
     }
+    for (i = 0; i < 4; i++){
+        for (j = 0; j < 4; j++){
+            dispay[i + 9][j + 29] = car[i][j];
+            dispay[i + 12][j + 25] = car[i][j];
+            dispay[i + 12][j + 33] = car[i][j];
+            dispay[i + 15][j + 29] = car[i][j];
+        }
+    }
     for (i = 0; i < 7; i++){
         for (j = 0; j < 14; j++){
-            dispay[i + 1][j + 35] = cartasV[i][j];
+            dispay[i + 1][j + 23] = cartasV[i][j];
             dispay[i + 10][j + 1] = cartasV[i][j];
-            dispay[i + 10][j + 70] = cartasV[i][j];
+            dispay[i + 11][j + 47] = cartasV[i][j];
         }
     }
     for (i = 0; i < 8; i++){
         for (j = 0; j < 17; j++){
-            dispay[i + 21][j + 35] = cartas[i][j];
+            dispay[i + 20][j + 22] = cartas[i][j];
         }
     }
 
