@@ -8,7 +8,7 @@
 #define TAMANHO_BARALHO 27
 #define TAMANHO_MAO 3
 #define PONTOS_PARA_VITORIA 12
-#define NUMERO_CLIENTS 4
+#define NUMERO_CLIENTS 2
 #define PORT 8080
 
 //structs
@@ -103,7 +103,7 @@ void embaralhar(){
 void distribuir(Jogador *jogadores, int jogadorAtual){
     printf("\033[0;31mDistribuindo...\033[0;37m\n");
     sleep(2);
-    if (jogadorAtual == NUMERO_CLIENTS - 1) return;
+    if (jogadorAtual == NUMERO_CLIENTS) return;
     for (int i = 0; i < TAMANHO_MAO; i++){
         jogadores[jogadorAtual].mao[i] = baralho[j];
         j++;
@@ -111,18 +111,32 @@ void distribuir(Jogador *jogadores, int jogadorAtual){
     jogadores[jogadorAtual].nCartas = TAMANHO_MAO;
     distribuir(jogadores, jogadorAtual+1);
 }
+void truco(){
+    
+}
 
-void jogada(Jogador *jogadores, int client_socket, int *pontosMesa, Mesa mesa, int jogadas){
+void jogada(Jogador *jogadores, int client_socket){
     printf("\033[0;31mJogada...\033[0;37m\n");
+    printf("#");
     sleep(2);
-    send(client_socket, mensagem, strlen(mensagem), 0);
-    char *resposta[100];
-    recv(client_socket, resposta, sizeof(resposta), 0);
-    if(resposta == 0){
-        truco();
-    } else {
-        mesa.rodada[client_socket] = jogadores[client_socket].mao[resposta];
+    for (i = 0; i < TAMANHO_MAO; i++){
+        char mensagem[20] = "";
+        strcat(mensagem, jogadores[client_socket].mao[i].carta);
+        strcat(mensagem, jogadores[client_socket].mao[i].nipe);
+        send(client_socket, mensagem, strlen(mensagem), 0);
+        printf("#");
     }
+    char mensagem[100];
+    strcpy(mensagem, "Escolha a carta ou digite 0 para pedir truco\n");
+    send(client_socket, mensagem, strlen(mensagem), 0);
+    printf("#");
+    int *resposta;
+    recv(client_socket, resposta, sizeof(resposta), 0);
+    printf("%d", resposta);
+}
+
+void verificarVencedor(){
+
 }
 
 void rodada(int jogadas, Mesa *rodadas, int rodadaAtual, int jogadorAtual, int pontosMesa){
@@ -132,7 +146,7 @@ void rodada(int jogadas, Mesa *rodadas, int rodadaAtual, int jogadorAtual, int p
         verificarVencedor(rodadas[rodadaAtual], jogadores, pontosMesa);
     }
     printf("Rodada %d\n", jogadas+1);
-    jogada(jogadores, jogadorAtual, &pontosMesa, rodadas[rodadaAtual], jogadas);
+    jogada(jogadores, jogadorAtual);
     printf("Mesa: ");
     for (i = 0; i < jogadas; i++){
         printf("%s%s ", rodadas[rodadaAtual].rodada[i].carta, rodadas[rodadaAtual].rodada[i].nipe);
