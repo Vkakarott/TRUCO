@@ -26,6 +26,7 @@ typedef struct {
 typedef struct {
     char nome[20];
     int pontos;
+    int nCartas;
     Carta mao[TAMANHO_MAO];
 } Jogador;
 
@@ -52,6 +53,8 @@ Mesa rodadas[3];
 int i, j;
 
 void gerarBaralho(){
+    printf("\033[0;31mGerando baralho...\033[0;37m\n");
+    sleep(2);
     FILE *arq;
     char linha[20];
     int i = 0;
@@ -72,6 +75,8 @@ void gerarBaralho(){
 }
 
 void embaralhar(){
+    printf("\033[0;31mEmbaralhando...\033[0;37m\n");
+    sleep(2);
     srand(time(NULL));
     Carta temp;
 
@@ -87,15 +92,20 @@ void embaralhar(){
 }
 
 void distribuir(Jogador *jogadores, int jogadorAtual){
-    if (jogadorAtual == NUMERO_JOGADORES) return;
+    printf("\033[0;31mDistribuindo...\033[0;37m\n");
+    sleep(2);
+    if (jogadorAtual == NUMERO_JOGADORES - 1) return;
     for (int i = 0; i < TAMANHO_MAO; i++){
         jogadores[jogadorAtual].mao[i] = baralho[j];
         j++;
     }
+    jogadores[jogadorAtual].nCartas = TAMANHO_MAO;
     distribuir(jogadores, jogadorAtual+1);
 }
 
 void definirDuplas(Jogador *jogadores){
+    printf("\033[0;31mDefinindo duplas...\033[0;37m\n");
+    sleep(2);
     strcpy(jogadores[1].nome, "jogador 2");
     strcpy(jogadores[2].nome, "jogador 3");
     strcpy(jogadores[3].nome, "jogador 4");
@@ -110,42 +120,83 @@ void definirDuplas(Jogador *jogadores){
 }
 
 void reorganizarMao(Jogador jogador, int indiceSelecionado, int jogadas) {
-    Carta temp = jogador.mao[indiceSelecionado];
-
-    for (int i = indiceSelecionado; i < TAMANHO_MAO - 1 - jogadas; i++) {
+    printf("\033[0;31mReorganizando mão...\033[0;37m\n");
+    sleep(2);
+    for (int i = indiceSelecionado; i < jogador.nCartas; i++) {
         jogador.mao[i] = jogador.mao[i + 1];
     }
 
-    strcpy(jogador.mao[TAMANHO_MAO - 1 - jogadas].carta, "");
-    strcpy(jogador.mao[TAMANHO_MAO - 1 - jogadas].nipe, "");
-    jogador.mao[TAMANHO_MAO - 1 - jogadas].valor = 0;
+    strcpy(jogador.mao[jogador.nCartas - 1].carta, "");
+    strcpy(jogador.mao[jogador.nCartas - 1].nipe, "");
+    jogador.mao[jogador.nCartas - 1].valor = 0;
+    jogador.nCartas--;
+}
+
+void truco(Jogador *jogadores, int *pontosMesa, int jogador, int tru){
+    printf("\033[0;31mTruco...\033[0;37m\n");
+    sleep(2);
+    int temp;
+    if (jogador == 3) {
+        switch (tru){
+        case 1:
+            printf("TRUCO!\nO jogador %s pediu truco!\n1 - Aceitar\n2 - Pedir seis\n3 - Correr\n", jogadores[jogador].nome);
+            scanf("%d", &temp);
+            if (temp == 1) *pontosMesa = 3;
+            if (temp == 2) truco(jogadores, &pontosMesa, 0, 3);
+            if (temp == 3) dupla2.pontos += 1;
+            break;
+        case 3:
+            printf("SEIS!\nO jogador %s pediu seis!\n1 - Aceitar\n2 - Pedir nove\n3 - Correr\n", jogadores[jogador].nome);
+            scanf("%d", &temp);
+            if (temp == 1) *pontosMesa = 6;
+            if (temp == 2) truco(jogadores, &pontosMesa, 0, 6);
+            if (temp == 2) dupla2.pontos += 3;
+            break;
+        case 6:
+            printf("NOVE!\nO jogador %s pediu nove!\n1 - Aceitar\n2 - Pedir doze\n3 - Correr\n", jogadores[jogador].nome);
+            scanf("%d", &temp);
+            if (temp == 1) *pontosMesa = 9;
+            if (temp == 2) truco(jogadores, &pontosMesa, 0, 9);
+            if (temp == 3) dupla2.pontos += 6;
+            break;
+        case 9:
+            printf("DOZE!\nO jogador %s pediu doze!\n1 - Aceitar\n2 - Correr\n", jogadores[jogador].nome);
+            scanf("%d", &temp);
+            if (temp == 1) *pontosMesa = 12;
+            if (temp == 3) dupla2.pontos += 9;
+            break;
+        default:
+            break;
+        }
+    } else {
+        // boots
+    }
 }
 
 void jogada(Jogador *jogadores, int jogadorAtual, int *pontosMesa, Mesa mesa, int jogadas){
+    printf("\033[0;31mJogada...\033[0;37m\n");
+    sleep(2);
     if (jogadorAtual == 0){
-        for (i = 0; i < TAMANHO_MAO; i++){
+        for (i = 0; i < jogadores[0].nCartas; i++){
             printf("%d - %s%s\n", i, jogadores[0].mao[i].carta, jogadores[0].mao[i].nipe);
         }
-        printf("3 - TRUCO!");
+        printf("%d - TRUCO!", i);
         scanf("%d", &i);
         if (i == 3){
-            pontosMesa += 3;
-            truco();
+            truco(jogadores, &pontosMesa, jogadorAtual, 1);
             return;
         } else {
             mesa.rodada[jogadorAtual] = jogadores[0].mao[i];
-            reorganizarMao(jogadores[0], i, jogadas)
+            reorganizarMao(jogadores[0], i, jogadas);
             return;
         }
     }
     // boots
 }
 
-void truco(){
-    
-}
-
 void partida(ultimoJogador){
+    printf("\033[0;31mPartida...\033[0;37m\n");
+    sleep(2);
     if (dupla1.pontos >= PONTOS_PARA_VITORIA || dupla2.pontos >= PONTOS_PARA_VITORIA){
         printf("Fim de jogo!\n");
         if (dupla1.pontos >= PONTOS_PARA_VITORIA){
@@ -161,7 +212,7 @@ void partida(ultimoJogador){
     for (i = 0; i < NUMERO_JOGADORES; i++){
         printf("Jogador %d: %s\n", i+1, jogadores[i].nome);
         for (j = 0; j < TAMANHO_MAO; j++){
-            printf("%s de %s\n", jogadores[i].mao[j].carta, jogadores[i].mao[j].nipe);
+            printf("%s%s ", jogadores[i].mao[j].carta, jogadores[i].mao[j].nipe);
         }
         printf("\n");
     }
@@ -169,9 +220,10 @@ void partida(ultimoJogador){
 }
 
 void rodada(int jogadas, Mesa *rodadas, int rodadaAtual, int jogadorAtual, int pontosMesa){
+    printf("\033[0;31mRodada...\033[0;37m\n");
+    sleep(2);
     if (jogadas == NUMERO_JOGADORES){
         verificarVencedor(rodadas[rodadaAtual], jogadores, pontosMesa);
-        return;
     }
     printf("Rodada %d\n", jogadas+1);
     jogada(jogadores, jogadorAtual, &pontosMesa, rodadas[rodadaAtual], jogadas);
@@ -185,15 +237,8 @@ void rodada(int jogadas, Mesa *rodadas, int rodadaAtual, int jogadorAtual, int p
 }
 
 void verificarVencedor(Mesa mesa, Jogador *jogadores, int pontosMesa){
-    int D1 = jogadores[0].pontos + jogadores[2].pontos;
-    int D2 = jogadores[1].pontos + jogadores[3].pontos;
-    if (D1 == 2){
-        dupla1.pontos += pontosMesa;
-        printf("Dupla 1 venceu a rodada!\n");
-    } else if (D2 == 2){
-        dupla2.pontos += pontosMesa;
-        printf("Dupla 2 venceu a rodada!\n");
-    }
+    printf("\033[0;31mVerificando vencedor...\033[0;37m\n");
+    sleep(2);
     int maiorCarta = 0;
     int jogadorVencedor = 0;
     for (i = 0; i < NUMERO_JOGADORES; i++){
@@ -211,8 +256,17 @@ void verificarVencedor(Mesa mesa, Jogador *jogadores, int pontosMesa){
         strcpy(mesa.rodada[i].nipe, "");
         mesa.rodada->valor = 0;
     }
-
-    partida(jogadorVencedor);
+    int D1 = jogadores[0].pontos + jogadores[2].pontos;
+    int D2 = jogadores[1].pontos + jogadores[3].pontos;
+    if (D1 == 2){
+        dupla1.pontos += pontosMesa;
+        printf("Dupla 1 venceu a rodada!\n");
+        partida(jogadorVencedor);
+    } else if (D2 == 2){
+        dupla2.pontos += pontosMesa;
+        printf("Dupla 2 venceu a rodada!\n");
+        partida(jogadorVencedor);
+    }
 }
 
 int main(){
