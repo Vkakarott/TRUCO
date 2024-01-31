@@ -8,13 +8,12 @@
 #define TAMANHO_BARALHO 27
 #define TAMANHO_MAO 3
 #define PONTOS_PARA_VITORIA 12
-#define NUMERO_CLIENTS 2
+#define NUMERO_CLIENTS 4
 #define PORT 8080
 
 //structs
 typedef struct {
-    char carta[2];
-    char nipe[5];
+    char carta[10];
     int valor;
 } Carta ;
 
@@ -63,7 +62,7 @@ void gerarBaralho(){
     }
 
     while (fgets(linha, sizeof(linha), arq) != NULL){
-        sscanf(linha, "%s %s %d", baralho[i].carta, baralho[i].nipe, &baralho[i].valor);
+        sscanf(linha, "%s %d", baralho[i].carta, &baralho[i].valor);
         i++;
     }
 
@@ -111,32 +110,87 @@ void distribuir(Jogador *jogadores, int jogadorAtual){
     jogadores[jogadorAtual].nCartas = TAMANHO_MAO;
     distribuir(jogadores, jogadorAtual+1);
 }
-void truco(){
-    
+
+void reorganizarMao(Jogador jogador, int indiceSelecionado, int jogadas) {
+    printf("\033[0;31mReorganizando mão...\033[0;37m\n");
+    sleep(2);
+    for (int i = indiceSelecionado; i < jogador.nCartas; i++) {
+        jogador.mao[i] = jogador.mao[i + 1];
+    }
+
+    strcpy(jogador.mao[jogador.nCartas - 1].carta, "");
+    jogador.mao[jogador.nCartas - 1].valor = 0;
+    jogador.nCartas--;
 }
 
-void jogada(Jogador *jogadores, int client_socket){
+void truco(){
+    printf("opcao nao disponivel!");
+}
+
+void jogada(Jogador *jogadores, int client_socket, Mesa mesa, int jogadas){
     printf("\033[0;31mJogada...\033[0;37m\n");
-    printf("#");
     sleep(2);
     for (i = 0; i < TAMANHO_MAO; i++){
         char mensagem[20] = "";
-        strcat(mensagem, jogadores[client_socket].mao[i].carta);
-        strcat(mensagem, jogadores[client_socket].mao[i].nipe);
+        strcpy(mensagem, jogadores[client_socket].mao[i].carta);
         send(client_socket, mensagem, strlen(mensagem), 0);
-        printf("#");
     }
-    char mensagem[100];
+    char mensagem[100] = "";
     strcpy(mensagem, "Escolha a carta ou digite 0 para pedir truco\n");
     send(client_socket, mensagem, strlen(mensagem), 0);
-    printf("#");
-    int *resposta;
-    recv(client_socket, resposta, sizeof(resposta), 0);
-    printf("%d", resposta);
+    int *resposta = (int *) malloc(sizeof(int));
+    ssize_t bytes_recebidos = recv(client_socket, resposta, sizeof(int), 0);
+    if (bytes_recebidos <= 0) {
+        // Tratamento para desconexão ou erro de leitura
+        perror("Erro ao receber resposta do jogador");
+        // Lógica para tratar a desconexão, se necessário
+    } else {
+        if (resposta == 0) {
+            truco();
+        } else {
+            // Certifique-se de que o índice está no intervalo correto
+            if (resposta >= 1 && resposta <= TAMANHO_MAO) {
+                // Mesa.rodada[client_socket] é um array e deve receber uma carta específica
+                mesa.rodada[client_socket] = jogadores[client_socket].mao[*resposta - 1];
+                reorganizarMao(jogadores[client_socket], resposta - 1, jogadas);
+            } else {
+                // Lógica para tratar uma escolha inválida, se necessário
+            }
+        }
+    }
+    free(resposta);
 }
 
-void verificarVencedor(){
-
+void verificarVencedor(Mesa mesa, Jogador *jogadores, int pontosMesa){
+    printf("\033[0;31mVerificando vencedor...\033[0;37m\n");
+    sleep(2);
+    int maiorCarta = 0;
+    int jogadorVencedor = 0;
+    for (i = 0; i < NUMERO_CLIENTS; i++){
+        if (mesa.rodada[i].valor > maiorCarta){
+            maiorCarta = mesa.rodada[i].valor;
+            jogadorVencedor = i;
+        }
+    }
+    mesa.maiorCarta = maiorCarta;
+    strcpy(mesa.jogadorVencedor, jogadores[jogadorVencedor].nome);
+    printf("%s venceu a rodada com %s\n", mesa.jogadorVencedor, mesa.rodada[jogadorVencedor].carta);
+    jogadores[jogadorVencedor].pontos += 1;
+    for (i = 0; i < NUMERO_CLIENTS; i++){
+        strcpy(mesa.rodada[i].carta, "");
+        mesa.rodada->valor = 0;
+    }
+    int D1 = jogadores[0].pontos + jogadores[2].pontos;
+    int D2 = jogadores[1].pontos + jogadores[3].pontos;
+    if (D1 == 2){
+        dupla1.pontos += pontosMesa;
+        printf("Dupla 1 venceu a rodada!\n");
+        partida(jogadorVencedor);
+    } else if (D2 == 2){
+        dupla2.pontos += pontosMesa;
+        printf("Dupla 2 venceu a rodada!\n");
+        partida(jogadorVencedor);
+    }
 }
 
 void rodada(int jogadas, Mesa *rodadas, int rodadaAtual, int jogadorAtual, int pontosMesa){
@@ -146,10 +200,10 @@ void rodada(int jogadas, Mesa *rodadas, int rodadaAtual, int jogadorAtual, int p
         verificarVencedor(rodadas[rodadaAtual], jogadores, pontosMesa);
     }
     printf("Rodada %d\n", jogadas+1);
-    jogada(jogadores, jogadorAtual);
+    jogada(jogadores, jogadorAtual, rodadas[jogadorAtual], jogadas);
     printf("Mesa: ");
     for (i = 0; i < jogadas; i++){
-        printf("%s%s ", rodadas[rodadaAtual].rodada[i].carta, rodadas[rodadaAtual].rodada[i].nipe);
+        printf("%s ", rodadas[rodadaAtual].rodada[i].carta);
     }
     printf("\n");
 
@@ -174,7 +228,7 @@ void partida(ultimoJogador){
     for (i = 0; i < NUMERO_CLIENTS; i++){
         printf("Jogador %d: %s\n", i+1, jogadores[i].nome);
         for (j = 0; j < TAMANHO_MAO; j++){
-            printf("%s%s ", jogadores[i].mao[j].carta, jogadores[i].mao[j].nipe);
+            printf("%s ", jogadores[i].mao[j].carta);
         }
         printf("\n");
     }
@@ -237,12 +291,9 @@ int main() {
         strcpy(jogadores[i].nome, buffer);
     }
 
-
     gerarBaralho();
     definirDuplas(jogadores);
     partida(0);
-
-
 
     return 0;
 }

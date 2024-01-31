@@ -8,20 +8,6 @@
 #define PORT 12345
 #define MAX_BUFFER_SIZE 1024
 
-typedef struct {
-    char carta[2];
-    char nipe[5];
-    int valor;
-} Carta;
-
-typedef struct {
-    char nome[20];
-    int pontos;
-    int nCartas;
-    Carta mao[3];
-    int socket;
-} Jogador;
-
 void error(const char *msg) {
     perror(msg);
     exit(EXIT_FAILURE);
