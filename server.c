@@ -123,42 +123,31 @@ void reorganizarMao(Jogador jogador, int indiceSelecionado, int jogadas) {
     jogador.nCartas--;
 }
 
-void truco(){
-    printf("opcao nao disponivel!");
-}
-
-void jogada(Jogador *jogadores, int client_socket, Mesa mesa, int jogadas){
+void jogada(Jogador *jogadores, int client_socket) {
     printf("\033[0;31mJogada...\033[0;37m\n");
     sleep(2);
-    for (i = 0; i < TAMANHO_MAO; i++){
+
+    // Send the player's cards to the client
+    for (int i = 0; i < jogadores[client_socket].nCartas; i++) {
         char mensagem[20] = "";
         strcpy(mensagem, jogadores[client_socket].mao[i].carta);
         send(client_socket, mensagem, strlen(mensagem), 0);
     }
-    char mensagem[100] = "";
+
+    // Prompt the player to choose a card or truco
+    char mensagem[100];
     strcpy(mensagem, "Escolha a carta ou digite 0 para pedir truco\n");
     send(client_socket, mensagem, strlen(mensagem), 0);
-    int *resposta = (int *) malloc(sizeof(int));
-    ssize_t bytes_recebidos = recv(client_socket, resposta, sizeof(int), 0);
-    if (bytes_recebidos <= 0) {
-        // Tratamento para desconexão ou erro de leitura
-        perror("Erro ao receber resposta do jogador");
-        // Lógica para tratar a desconexão, se necessário
-    } else {
-        if (resposta == 0) {
-            truco();
-        } else {
-            // Certifique-se de que o índice está no intervalo correto
-            if (resposta >= 1 && resposta <= TAMANHO_MAO) {
-                // Mesa.rodada[client_socket] é um array e deve receber uma carta específica
-                mesa.rodada[client_socket] = jogadores[client_socket].mao[*resposta - 1];
-                reorganizarMao(jogadores[client_socket], resposta - 1, jogadas);
-            } else {
-                // Lógica para tratar uma escolha inválida, se necessário
-            }
-        }
-    }
-    free(resposta);
+
+    // Wait for the player's response
+    int resposta;
+    printf("Before recv: client_socket = %d\n", client_socket);
+if (recv(client_socket, &resposta, sizeof(resposta), 0) == -1) {
+    perror("Erro ao receber resposta do cliente");
+    exit(EXIT_FAILURE);
+}
+
+    printf("Resposta do cliente: %d\n", resposta);
 }
 
 void verificarVencedor(Mesa mesa, Jogador *jogadores, int pontosMesa){
