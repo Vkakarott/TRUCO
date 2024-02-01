@@ -4,23 +4,9 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 
-#define SERVER_IP "127.0.0.1"
-#define PORT 12345
+#define SERVER_IP "192.168.40.238"
+#define PORT 8080
 #define MAX_BUFFER_SIZE 1024
-
-typedef struct {
-    char carta[2];
-    char nipe[5];
-    int valor;
-} Carta;
-
-typedef struct {
-    char nome[20];
-    int pontos;
-    int nCartas;
-    Carta mao[3];
-    int socket;
-} Jogador;
 
 void error(const char *msg) {
     perror(msg);
@@ -47,14 +33,38 @@ int main() {
 
     printf("Conectado ao servidor\n");
 
-    // Implemente a lógica do jogo do cliente aqui
+    // Receber o nome do jogador do servidor
+    char player_name[MAX_BUFFER_SIZE];
+    printf("Digite seu nome: ");
+    fgets(player_name, MAX_BUFFER_SIZE, stdin);
+    send(client_socket, player_name, strlen(player_name), 0);
+    printf("Nome enviado para o servidor.\n");
 
-    // Exemplo: Receber uma mensagem do servidor
-    char buffer[MAX_BUFFER_SIZE];
-    if (recv(client_socket, buffer, sizeof(buffer), 0) == -1)
-        error("Erro ao receber dados do servidor");
+    printf("Bem-vindo, %s!\n", player_name);
 
-    printf("Mensagem do servidor: %s\n", buffer);
+    // Loop principal para a lógica do jogo
+    while (1) {
+        // Exemplo: Receber informações do servidor sobre o estado atual do jogo
+        char game_info[MAX_BUFFER_SIZE];
+        if (recv(client_socket, game_info, sizeof(game_info), 0) == -1)
+            error("Erro ao receber dados do servidor");
+
+        printf("%s\n", game_info);
+
+        // Verificar se é a vez do jogador fazer uma jogada
+        int is_player_turn;
+        if (recv(client_socket, &is_player_turn, sizeof(is_player_turn), 0) == -1)
+            error("Erro ao receber dados do servidor");
+
+        if (is_player_turn) {
+            // Exemplo: Enviar opções de jogada para o servidor (cartas disponíveis, etc.)
+            // Aguardar a resposta do jogador
+            int player_choice;
+            printf("Sua vez! Escolha uma opção: ");
+            scanf("%d", &player_choice);
+            send(client_socket, &player_choice, sizeof(player_choice), 0);
+        }
+    }
 
     // Fechar o socket do cliente
     close(client_socket);

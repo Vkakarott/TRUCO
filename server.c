@@ -8,13 +8,12 @@
 #define TAMANHO_BARALHO 27
 #define TAMANHO_MAO 3
 #define PONTOS_PARA_VITORIA 12
-#define NUMERO_CLIENTS 2
+#define NUMERO_CLIENTS 4
 #define PORT 8080
 
 //structs
 typedef struct {
-    char carta[2];
-    char nipe[5];
+    char carta[7];
     int valor;
 } Carta ;
 
@@ -63,7 +62,7 @@ void gerarBaralho(){
     }
 
     while (fgets(linha, sizeof(linha), arq) != NULL){
-        sscanf(linha, "%s %s %d", baralho[i].carta, baralho[i].nipe, &baralho[i].valor);
+        sscanf(linha, "%s %d", baralho[i].carta, &baralho[i].valor);
         i++;
     }
 
@@ -115,24 +114,31 @@ void truco(){
     
 }
 
-void jogada(Jogador *jogadores, int client_socket){
+void jogada(Jogador *jogadores, int client_socket) {
     printf("\033[0;31mJogada...\033[0;37m\n");
-    printf("#");
     sleep(2);
-    for (i = 0; i < TAMANHO_MAO; i++){
+
+    // Send the player's cards to the client
+    for (int i = 0; i < jogadores[client_socket].nCartas; i++) {
         char mensagem[20] = "";
-        strcat(mensagem, jogadores[client_socket].mao[i].carta);
-        strcat(mensagem, jogadores[client_socket].mao[i].nipe);
+        strcpy(mensagem, jogadores[client_socket].mao[i].carta);
         send(client_socket, mensagem, strlen(mensagem), 0);
-        printf("#");
     }
+
+    // Prompt the player to choose a card or truco
     char mensagem[100];
     strcpy(mensagem, "Escolha a carta ou digite 0 para pedir truco\n");
     send(client_socket, mensagem, strlen(mensagem), 0);
-    printf("#");
-    int *resposta;
-    recv(client_socket, resposta, sizeof(resposta), 0);
-    printf("%d", resposta);
+
+    // Wait for the player's response
+    int resposta;
+    printf("Before recv: client_socket = %d\n", client_socket);
+if (recv(client_socket, &resposta, sizeof(resposta), 0) == -1) {
+    perror("Erro ao receber resposta do cliente");
+    exit(EXIT_FAILURE);
+}
+
+    printf("Resposta do cliente: %d\n", resposta);
 }
 
 void verificarVencedor(){
@@ -149,7 +155,7 @@ void rodada(int jogadas, Mesa *rodadas, int rodadaAtual, int jogadorAtual, int p
     jogada(jogadores, jogadorAtual);
     printf("Mesa: ");
     for (i = 0; i < jogadas; i++){
-        printf("%s%s ", rodadas[rodadaAtual].rodada[i].carta, rodadas[rodadaAtual].rodada[i].nipe);
+        printf("%s ", rodadas[rodadaAtual].rodada[i].carta);
     }
     printf("\n");
 
@@ -174,7 +180,7 @@ void partida(ultimoJogador){
     for (i = 0; i < NUMERO_CLIENTS; i++){
         printf("Jogador %d: %s\n", i+1, jogadores[i].nome);
         for (j = 0; j < TAMANHO_MAO; j++){
-            printf("%s%s ", jogadores[i].mao[j].carta, jogadores[i].mao[j].nipe);
+            printf("%s ", jogadores[i].mao[j].carta);
         }
         printf("\n");
     }
