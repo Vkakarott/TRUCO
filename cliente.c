@@ -4,18 +4,30 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 
-#define SERVER_IP "192.168.40.238"
+#define HOST_IP "127.0.0.1"
 #define PORT 8080
 #define MAX_BUFFER_SIZE 1024
+
+int client_socket;
+struct sockaddr_in server_addr;
+char buffer[MAX_BUFFER_SIZE] = {0};
 
 void error(const char *msg) {
     perror(msg);
     exit(EXIT_FAILURE);
 }
 
+char* receiveFromServer() {
+    read(client_socket, buffer, MAX_BUFFER_SIZE);
+    return strdup(buffer);
+}
+
+void sendToServer(const char *message) {
+    send(client_socket, message, strlen(message), 0);
+}
+
 int main() {
-    int client_socket;
-    struct sockaddr_in server_addr;
+    
 
     // Criação do socket do cliente
     client_socket = socket(AF_INET, SOCK_STREAM, 0);
@@ -44,26 +56,18 @@ int main() {
 
     // Loop principal para a lógica do jogo
     while (1) {
-        // Exemplo: Receber informações do servidor sobre o estado atual do jogo
-        char game_info[MAX_BUFFER_SIZE];
-        if (recv(client_socket, game_info, sizeof(game_info), 0) == -1)
-            error("Erro ao receber dados do servidor");
+        // Receive message from the server
+        char *messageFromServer = receiveFromServer();
+        printf("Received message from server: %s\n", messageFromServer);
 
-        printf("%s\n", game_info);
+        // Get user input for the response
+        char response[MAX_BUFFER_SIZE];
+        printf("Digite sua resposta: ");
+        fgets(response, MAX_BUFFER_SIZE, stdin);
+        sendToServer(response);
 
-        // Verificar se é a vez do jogador fazer uma jogada
-        int is_player_turn;
-        if (recv(client_socket, &is_player_turn, sizeof(is_player_turn), 0) == -1)
-            error("Erro ao receber dados do servidor");
-
-        if (is_player_turn) {
-            // Exemplo: Enviar opções de jogada para o servidor (cartas disponíveis, etc.)
-            // Aguardar a resposta do jogador
-            int player_choice;
-            printf("Sua vez! Escolha uma opção: ");
-            scanf("%d", &player_choice);
-            send(client_socket, &player_choice, sizeof(player_choice), 0);
-        }
+        // Free the allocated memory for the received message
+        free(messageFromServer);
     }
 
     // Fechar o socket do cliente

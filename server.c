@@ -8,8 +8,14 @@
 #define TAMANHO_BARALHO 27
 #define TAMANHO_MAO 3
 #define PONTOS_PARA_VITORIA 12
-#define NUMERO_CLIENTS 4
+#define NUMERO_CLIENTS 1
 #define PORT 8080
+
+int server_fd, new_socket, valread;
+struct sockaddr_in address;
+int opt = 1;
+int addrlen = sizeof(address);
+char buffer[1024] = {0};
 
 //structs
 typedef struct {
@@ -46,6 +52,15 @@ Jogador jogadores[NUMERO_CLIENTS];
 Mesa rodadas[3];
 
 int i, j;
+
+void sendToClient(int client_socket, const char *message) {
+    send(client_socket, message, strlen(message), 0);
+}
+
+char* receiveFromClient(int client_socket) {
+    valread = read(client_socket, buffer, sizeof(buffer));
+    return strdup(buffer);
+}
 
 void gerarBaralho(){
     printf("\033[0;31mGerando baralho...\033[0;37m\n");
@@ -127,27 +142,13 @@ void jogada(Jogador *jogadores, int client_socket) {
     printf("\033[0;31mJogada...\033[0;37m\n");
     sleep(2);
 
-    // Send the player's cards to the client
-    for (int i = 0; i < jogadores[client_socket].nCartas; i++) {
-        char mensagem[20] = "";
-        strcpy(mensagem, jogadores[client_socket].mao[i].carta);
-        send(client_socket, mensagem, strlen(mensagem), 0);
-    }
-
-    // Prompt the player to choose a card or truco
-    char mensagem[100];
-    strcpy(mensagem, "Escolha a carta ou digite 0 para pedir truco\n");
-    send(client_socket, mensagem, strlen(mensagem), 0);
-
-    // Wait for the player's response
-    int resposta;
-    printf("Before recv: client_socket = %d\n", client_socket);
-if (recv(client_socket, &resposta, sizeof(resposta), 0) == -1) {
-    perror("Erro ao receber resposta do cliente");
-    exit(EXIT_FAILURE);
-}
-
-    printf("Resposta do cliente: %d\n", resposta);
+    printf("Vez de %s\n", jogadores[client_socket].nome);
+    const char *message = "Sua vez de jogar!";
+    sendToClient(jogadores[client_socket].clt_skt, message);
+    printf("Aguardando jogada de %s...\n", jogadores[client_socket].nome);
+    char *player_choice = receiveFromClient(jogadores[client_socket].clt_skt);
+    printf("%s jogou %s\n", jogadores[client_socket].nome, player_choice);
+    free(player_choice);
 }
 
 void verificarVencedor(Mesa mesa, Jogador *jogadores, int pontosMesa){
@@ -189,7 +190,7 @@ void rodada(int jogadas, Mesa *rodadas, int rodadaAtual, int jogadorAtual, int p
         verificarVencedor(rodadas[rodadaAtual], jogadores, pontosMesa);
     }
     printf("Rodada %d\n", jogadas+1);
-    jogada(jogadores, jogadorAtual, rodadas[jogadorAtual], jogadas);
+    jogada(jogadores, jogadorAtual);
     printf("Mesa: ");
     for (i = 0; i < jogadas; i++){
         printf("%s ", rodadas[rodadaAtual].rodada[i].carta);
@@ -225,11 +226,6 @@ void partida(ultimoJogador){
 }
 
 int main() {
-    int server_fd, new_socket, valread;
-    struct sockaddr_in address;
-    int opt = 1;
-    int addrlen = sizeof(address);
-    char buffer[1024] = {0};
     
     // Criar socket do servidor
     if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
@@ -271,6 +267,7 @@ int main() {
         
         client_sockets[i] = new_socket;
         printf("Cliente %d conectado\n", i+1);
+        jogadores[i].clt_skt = new_socket;
     }
 
     // Receber dados dos clientes e imprimir na tela
