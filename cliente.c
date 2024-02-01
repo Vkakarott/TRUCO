@@ -17,16 +17,24 @@ void error(const char *msg) {
     exit(EXIT_FAILURE);
 }
 
+// Funcao para receber mensagem do servidor
 char* receiveFromServer() {
     read(client_socket, buffer, MAX_BUFFER_SIZE);
     return strdup(buffer);
 }
 
+// Funcao para enviar mensagem para o servidor
 void sendToServer(const char *message) {
     send(client_socket, message, strlen(message), 0);
 }
 
 int main() {
+    // Obter o IP do servidor
+    printf("Digite o IP do servidor: ");
+    char SERVER_IP[20];
+    scanf("%s", SERVER_IP);
+    if(strcmp(SERVER_IP, "localhost") == 0)
+        strcpy(SERVER_IP, HOST_IP);
     
 
     // Criação do socket do cliente
@@ -48,7 +56,7 @@ int main() {
     // Receber o nome do jogador do servidor
     char player_name[MAX_BUFFER_SIZE];
     printf("Digite seu nome: ");
-    fgets(player_name, MAX_BUFFER_SIZE, stdin);
+    scanf("%s", player_name);
     send(client_socket, player_name, strlen(player_name), 0);
     printf("Nome enviado para o servidor.\n");
 
@@ -56,21 +64,26 @@ int main() {
 
     // Loop principal para a lógica do jogo
     while (1) {
-        // Receive message from the server
         char *messageFromServer = receiveFromServer();
         printf("Received message from server: %s\n", messageFromServer);
 
-        // Get user input for the response
+        int userResponse;
+        printf("Digite sua resposta (como um número inteiro): ");
+        scanf("%d", &userResponse);
+
         char response[MAX_BUFFER_SIZE];
-        printf("Digite sua resposta: ");
-        fgets(response, MAX_BUFFER_SIZE, stdin);
+        snprintf(response, sizeof(response), "%d", userResponse);
         sendToServer(response);
 
-        // Free the allocated memory for the received message
         free(messageFromServer);
+        if (*messageFromServer == 'win'){
+            printf("Você venceu!\n");
+            break;
+        } else if (*messageFromServer == 'lose'){
+            printf("Você perdeu!\n");
+            break;
+        }
     }
-
-    // Fechar o socket do cliente
     close(client_socket);
 
     return 0;
