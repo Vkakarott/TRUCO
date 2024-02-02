@@ -6,7 +6,7 @@
 
 #define HOST_IP "127.0.0.1"
 #define PORT 8080
-#define MAX_BUFFER_SIZE 1024
+#define MAX_BUFFER_SIZE 5024
 
 int client_socket;
 struct sockaddr_in server_addr;
@@ -76,10 +76,10 @@ int main() {
         sendToServer(response);
 
         free(messageFromServer);
-        if (*messageFromServer == 'win'){
+        if (strcmp(messageFromServer, "win") == 0){
             printf("Você venceu!\n");
             break;
-        } else if (*messageFromServer == 'lose'){
+        } else if (strcmp(messageFromServer, "lose") == 0){
             printf("Você perdeu!\n");
             break;
         }
