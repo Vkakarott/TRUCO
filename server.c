@@ -15,7 +15,7 @@ int server_fd, new_socket, valread;
 struct sockaddr_in address;
 int opt = 1;
 int addrlen = sizeof(address);
-char buffer[1024] = {0};
+char buffer[5024] = {0};
 
 //structs
 typedef struct {
@@ -64,7 +64,7 @@ char* receiveFromClient(int client_socket) {
 
 void gerarBaralho(){
     printf("\033[0;31mGerando baralho...\033[0;37m\n");
-    sleep(2);
+    
     FILE *arq;
     char linha[20];
     int i = 0;
@@ -86,7 +86,7 @@ void gerarBaralho(){
 
 void definirDuplas(Jogador *jogadores){
     printf("\033[0;31mDefinindo duplas...\033[0;37m\n");
-    sleep(2);
+    
     strcpy(dupla1.jogador1, jogadores[0].nome);
     strcpy(dupla1.jogador2, jogadores[2].nome);
     strcpy(dupla2.jogador1, jogadores[1].nome);
@@ -99,7 +99,7 @@ void definirDuplas(Jogador *jogadores){
 
 void embaralhar(){
     printf("\033[0;31mEmbaralhando...\033[0;37m\n");
-    sleep(2);
+    
     srand(time(NULL));
     Carta temp;
 
@@ -116,7 +116,7 @@ void embaralhar(){
 
 void distribuir(Jogador *jogadores, int jogadorAtual){
     printf("\033[0;31mDistribuindo...\033[0;37m\n");
-    sleep(2);
+    
     if (jogadorAtual == NUMERO_CLIENTS) return;
     for (int i = 0; i < TAMANHO_MAO; i++){
         jogadores[jogadorAtual].mao[i] = baralho[j];
@@ -128,7 +128,7 @@ void distribuir(Jogador *jogadores, int jogadorAtual){
 
 void reorganizarMao(Jogador jogador, int indiceSelecionado, int jogadas) {
     printf("\033[0;31mReorganizando mão...\033[0;37m\n");
-    sleep(2);
+    
     for (int i = indiceSelecionado; i < jogador.nCartas; i++) {
         jogador.mao[i] = jogador.mao[i + 1];
     }
@@ -138,22 +138,32 @@ void reorganizarMao(Jogador jogador, int indiceSelecionado, int jogadas) {
     jogador.nCartas--;
 }
 
-void jogada(Jogador *jogadores, int client_socket) {
+void jogada(Jogador *jogadores, int client_socket, int rodadaAtual) {
     printf("\033[0;31mJogada...\033[0;37m\n");
-    sleep(2);
+    
 
     printf("Vez de %s\n", jogadores[client_socket].nome);
-    const char *message = "Sua vez de jogar!";
+    char* message;
+    strcpy(message, "Sua vez de jogar! \n");
+    strcat(message, jogadores[client_socket].mao[0].carta);
+    strcat(message, " ");
+    strcat(message, jogadores[client_socket].mao[1].carta);
+    strcat(message, " ");
+    strcat(message, jogadores[client_socket].mao[2].carta);
+    printf("*");
     sendToClient(jogadores[client_socket].clt_skt, message);
     printf("Aguardando jogada de %s...\n", jogadores[client_socket].nome);
     char *player_choice = receiveFromClient(jogadores[client_socket].clt_skt);
-    printf("%s jogou %s\n", jogadores[client_socket].nome, player_choice);
+    int player_choice_int = player_choice[0] - '0';
+    if(player_choice_int == 0);
+    else rodadas[rodadaAtual].rodada[client_socket] = jogadores[client_socket].mao[player_choice_int+1];
+    printf(" - %d - ", player_choice_int);
     free(player_choice);
 }
 
 void verificarVencedor(Mesa mesa, Jogador *jogadores, int pontosMesa){
     printf("\033[0;31mVerificando vencedor...\033[0;37m\n");
-    sleep(2);
+    
     int maiorCarta = 0;
     int jogadorVencedor = 0;
     for (i = 0; i < NUMERO_CLIENTS; i++){
@@ -185,12 +195,12 @@ void verificarVencedor(Mesa mesa, Jogador *jogadores, int pontosMesa){
 
 void rodada(int jogadas, Mesa *rodadas, int rodadaAtual, int jogadorAtual, int pontosMesa){
     printf("\033[0;31mRodada...\033[0;37m\n");
-    sleep(2);
+    
     if (jogadas == NUMERO_CLIENTS){
         verificarVencedor(rodadas[rodadaAtual], jogadores, pontosMesa);
     }
     printf("Rodada %d\n", jogadas+1);
-    jogada(jogadores, jogadorAtual);
+    jogada(jogadores, jogadorAtual, rodadaAtual);
     printf("Mesa: ");
     for (i = 0; i < jogadas; i++){
         printf("%s ", rodadas[rodadaAtual].rodada[i].carta);
@@ -202,7 +212,7 @@ void rodada(int jogadas, Mesa *rodadas, int rodadaAtual, int jogadorAtual, int p
 
 void partida(ultimoJogador){
     printf("\033[0;31mPartida...\033[0;37m\n");
-    sleep(2);
+    
     if (dupla1.pontos >= PONTOS_PARA_VITORIA || dupla2.pontos >= PONTOS_PARA_VITORIA){
         printf("Fim de jogo!\n");
         if (dupla1.pontos >= PONTOS_PARA_VITORIA){
