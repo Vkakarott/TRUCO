@@ -59,23 +59,34 @@ int main() {
     scanf("%s", player_name);
     send(client_socket, player_name, strlen(player_name), 0);
     printf("Nome enviado para o servidor.\n");
-
+    system("clear");
     printf("Bem-vindo, %s!\n", player_name);
+    printf("Aguarde o início do jogo...\n");
+    sleep(2);
 
     // Loop principal para a lógica do jogo
     while (1) {
         char *messageFromServer = receiveFromServer();
-        printf("Received message from server: %s\n", messageFromServer);
+        printf("%s\n", messageFromServer);
+        while (1) {
+            char *messageFromServer = receiveFromServer();
+            printf("%s\n", messageFromServer);
+            if (strcmp(messageFromServer, "win_mesa") == 0){
+                printf("Vocês venceram a mesa!\n");
+                break;
+            } else if (strcmp(messageFromServer, "lose_mesa") == 0){
+                printf("Vocês perderam!\n");
+                break;
+            }
+            int userResponse;
+            scanf("%d", &userResponse);
 
-        int userResponse;
-        printf("Digite sua resposta (como um número inteiro): ");
-        scanf("%d", &userResponse);
+            char response[MAX_BUFFER_SIZE];
+            snprintf(response, sizeof(response), "%d", userResponse);
+            sendToServer(response);
 
-        char response[MAX_BUFFER_SIZE];
-        snprintf(response, sizeof(response), "%d", userResponse);
-        sendToServer(response);
-
-        free(messageFromServer);
+            free(messageFromServer);
+        }
         if (strcmp(messageFromServer, "win") == 0){
             printf("Você venceu!\n");
             break;
