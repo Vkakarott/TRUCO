@@ -8,7 +8,7 @@
 #define TAMANHO_BARALHO 27
 #define TAMANHO_MAO 3
 #define PONTOS_PARA_VITORIA 12
-#define NUMERO_CLIENTS 1
+#define NUMERO_CLIENTS 4
 #define PORT 8080
 
 int server_fd, new_socket, valread;
@@ -53,8 +53,21 @@ Mesa rodadas[3];
 
 int i, j;
 
+void zerarRodadas() {
+    for (i = 0; i < TAMANHO_MAO; i++) {
+        for (j = 0; j < NUMERO_CLIENTS; j++) {
+            strcpy(rodadas[i].rodada[j].carta, "");
+            rodadas[i].rodada[j].valor = 0;
+        }
+
+        strcpy(rodadas[i].jogadorVencedor, "");
+        rodadas[i].maiorCarta = 0;
+    }
+}
+
 void sendToClient(int client_socket, const char *message) {
     send(client_socket, message, strlen(message), 0);
+    sleep(1);
 }
 
 char* receiveFromClient(int client_socket) {
@@ -418,7 +431,7 @@ void rodada(int jogadas, int rodadaAtual, int jogadorAtual, int pontosMesa){
     printf("Mesa: ");
     char message[500];
     strcpy(message, "0 Mesa: ");
-    for (i = 0; i < jogadas; i++){
+    for (i = 0; i < NUMERO_CLIENTS; i++){
         printf("%s ", rodadas[rodadaAtual].rodada[i].carta);
         strcat(message, rodadas[rodadaAtual].rodada[i].carta);
         strcat(message, " ");
@@ -432,6 +445,8 @@ void rodada(int jogadas, int rodadaAtual, int jogadorAtual, int pontosMesa){
 // Funcao que inicia a partida
 void partida(int ultimoJogador){
     printf("\033[0;31mPartida...\033[0;37m\n");
+
+    zerarRodadas();
     
     if (dupla1.pontos >= PONTOS_PARA_VITORIA || dupla2.pontos >= PONTOS_PARA_VITORIA){
         printf("Fim de jogo!\n");

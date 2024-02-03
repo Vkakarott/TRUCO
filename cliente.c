@@ -67,16 +67,17 @@ int main() {
     char server_message[MAX_BUFFER_SIZE];
     char response[MAX_BUFFER_SIZE];
     int userResponse;
+    int index = 0;
     // Loop principal para a lógica do jogo
     while (1) {
         strcpy(mensage, receiveFromServer());
-        sscanf(mensage, "%d %[^\n]", buffer, server_message);
+        sscanf(mensage, "%d %[^\n]", &index, server_message);
         printf("%s\n", server_message);
-        if (buffer == 1) {
+        if (index == 1) {
             scanf("%d", &userResponse);
             snprintf(response, sizeof(response), "%d", userResponse);
             sendToServer(response);
-        } else if (buffer == 2) {
+        } else if (index == 2) {
             printf("Obrigado por jogar!\n");
         }
     }
