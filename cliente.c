@@ -10,7 +10,6 @@
 
 int client_socket;
 struct sockaddr_in server_addr;
-char buffer[MAX_BUFFER_SIZE] = {0};
 
 void error(const char *msg) {
     perror(msg);
@@ -19,6 +18,7 @@ void error(const char *msg) {
 
 // Funcao para receber mensagem do servidor
 char* receiveFromServer() {
+    char buffer[MAX_BUFFER_SIZE] = {0};
     read(client_socket, buffer, MAX_BUFFER_SIZE);
     return strdup(buffer);
 }
@@ -61,15 +61,16 @@ int main() {
     printf("Nome enviado para o servidor.\n");
     system("clear");
     printf("Bem-vindo, %s!\n", player_name);
-    printf("Aguarde o início do jogo...\n");
+    printf("\033[3;90mAguarde o início do jogo...\n");
     sleep(2);
-    char mensage[MAX_BUFFER_SIZE];
-    char server_message[MAX_BUFFER_SIZE];
-    char response[MAX_BUFFER_SIZE];
+    
     int userResponse;
     int index = 0;
     // Loop principal para a lógica do jogo
     while (1) {
+        char mensage[MAX_BUFFER_SIZE];
+        char server_message[MAX_BUFFER_SIZE];
+        char response[MAX_BUFFER_SIZE];
         strcpy(mensage, receiveFromServer());
         sscanf(mensage, "%d %[^\n]", &index, server_message);
         printf("%s\n", server_message);

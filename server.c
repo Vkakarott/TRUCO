@@ -17,7 +17,6 @@ int server_fd, new_socket, valread;
 struct sockaddr_in address;
 int opt = 1;
 int addrlen = sizeof(address);
-char buffer[MAX_BUFFER_SIZE] = {0};
 
 //structs
 typedef struct {
@@ -72,15 +71,16 @@ void sendToClient(int client_socket, const char *message) {
 }
 
 char* receiveFromClient(int client_socket) {
+    char buffer[MAX_BUFFER_SIZE] = {0};
     valread = read(client_socket, buffer, sizeof(buffer));
     return strdup(buffer);
 }
 
 void gerarBaralho(){
-    printf("\033[0;31mGerando baralho...\033[0;37m\n");
+    printf("\033[3;90mGerando baralho...\033[0;37m\n");
     
     FILE *arq;
-    char linha[20];
+    char linha[CHAR_SIZE];
     int i = 0;
 
     arq = fopen("baralho.bin", "rb");
@@ -97,27 +97,28 @@ void gerarBaralho(){
 
     fclose(arq);
     sleep(1);
-    system("clear");
 }
 
 void definirDuplas(){
-    printf("\033[0;31mDefinindo duplas...\033[0;37m\n");   
+    printf("\033[3;90mDefinindo duplas...\033[0;37m\n");  
+
     strcpy(dupla1.jogador1, jogadores[0].nome);
     strcpy(dupla1.jogador2, jogadores[2].nome);
     strcpy(dupla2.jogador1, jogadores[1].nome);
     strcpy(dupla2.jogador2, jogadores[3].nome);
+    
     printf("Dupla 1: %s e %s\n", dupla1.jogador1, dupla1.jogador2);
     printf("Dupla 2: %s e %s\n", dupla2.jogador1, dupla2.jogador2);
-    sendToClient(jogadores[0].clt_skt, "0 Você faz parte da dupla 1\n");
-    sendToClient(jogadores[1].clt_skt, "0 Você faz parte da dupla 2\n");
-    sendToClient(jogadores[2].clt_skt, "0 Você faz parte da dupla 1\n");
-    sendToClient(jogadores[3].clt_skt, "0 Você faz parte da dupla 2\n");
+    
+    for (i = 0; i < NUMERO_PLAYERS; i+=2) sendToClient(jogadores[i].clt_skt, "0 Você faz parte da dupla 1");
+    for (i = 1; i < NUMERO_PLAYERS; i+=2) sendToClient(jogadores[i].clt_skt, "0 Você faz parte da dupla 2");
+
     dupla1.pontos = 0;
     dupla2.pontos = 0;
 }
 
 void embaralhar(){
-    printf("\033[0;31mEmbaralhando...\033[0;37m\n");
+    printf("\033[3;90mEmbaralhando...\033[0;37m\n");
     
     srand(time(NULL));
     Carta temp;
@@ -134,10 +135,10 @@ void embaralhar(){
 }
 
 void distribuir(int jogadorAtual){
-    printf("\033[0;31mDistribuindo...\033[0;37m\n");
+    printf("\033[3;90mDistribuindo...\033[0;37m\n");
     
     if (jogadorAtual == NUMERO_PLAYERS) return;
-    for (int i = 0; i < TAMANHO_MAO; i++){
+    for (i = 0; i < TAMANHO_MAO; i++){
         jogadores[jogadorAtual].mao[i] = baralho[j];
         j++;
     }
@@ -146,7 +147,7 @@ void distribuir(int jogadorAtual){
 }
 
 void reorganizarMao(Jogador jogador, int indiceSelecionado) {
-    printf("\033[0;31mReorganizando mão...\033[0;37m\n");
+    printf("\033[3;90mReorganizando mão...\033[0;37m\n");
     
     for (int i = indiceSelecionado; i < jogador.nCartas; i++) {
         jogador.mao[i] = jogador.mao[i + 1];
@@ -158,7 +159,8 @@ void reorganizarMao(Jogador jogador, int indiceSelecionado) {
 }
 
 void truco(int client_socket,int rodadaAtual, int *pontosMesa, int valorTruco){
-    printf("\033[0;31mTruco...\033[0;37m\n");
+    printf("\033[3;90mTruco...\033[0;37m\n");
+
     int adversario;
     int player_choice_int;
     
@@ -335,7 +337,7 @@ void truco(int client_socket,int rodadaAtual, int *pontosMesa, int valorTruco){
 }
 
 void jogada(int client_socket, int rodadaAtual, int pontosMesa) {
-    printf("\033[0;31mJogada...\033[0;37m\n");
+    printf("\033[3;90mJogada...\033[0;37m\n");
     printf("Vez de %s\n", jogadores[client_socket].nome);
 
     char message[500] = "0 Sua vez de jogar! \n";
@@ -343,7 +345,10 @@ void jogada(int client_socket, int rodadaAtual, int pontosMesa) {
 
     strcpy(message, "1 Suas cartas: ");
     for (i = 0; i < TAMANHO_MAO; i++){
-        strcat(message, i+1);
+        j = i+1;
+        char j_str[CHAR_SIZE];
+        sprintf(j_str, "%d", j);
+        strcat(message, j_str);
         strcat(message, " - ");
         strcat(message, jogadores[client_socket].mao[i].carta);
         strcat(message, " | ");
@@ -362,7 +367,7 @@ void jogada(int client_socket, int rodadaAtual, int pontosMesa) {
 }
 
 void verificarVencedor(Mesa mesa, int pontosMesa, int rodadaAtual){
-    printf("\033[0;31mVerificando vencedor...\033[0;37m\n");
+    printf("\033[3;90mVerificando vencedor...\033[0;37m\n");
     
     int maiorCarta = 0;
     int jogadorVencedor = 0;
@@ -412,9 +417,11 @@ void verificarVencedor(Mesa mesa, int pontosMesa, int rodadaAtual){
             sendToClient(jogadores[i].clt_skt, message);
         }
         strcpy(message, "+");
-        strcat(message, pontosMesa);
+        char pontosMesaStr[10];
+        sprintf(pontosMesaStr, "%d", pontosMesa);
+        strcat(message, pontosMesaStr);
         strcat(message, " Pontos");
-        for (i = 0; i < NUMERO_PLAYERS; i+2){
+        for (i = 0; i < NUMERO_PLAYERS; i += 2){
             sendToClient(jogadores[i].clt_skt, message);
         }
 
@@ -429,9 +436,11 @@ void verificarVencedor(Mesa mesa, int pontosMesa, int rodadaAtual){
             sendToClient(jogadores[i].clt_skt, message);
         }
         strcpy(message, "+");
-        strcat(message, pontosMesa);
+        char pontosMesaStr[10];
+        sprintf(pontosMesaStr, "%d", pontosMesa);
+        strcat(message, pontosMesaStr);
         strcat(message, " Pontos");
-        for (i = 1; i < NUMERO_PLAYERS; i+2){
+        for (i = 1; i < NUMERO_PLAYERS; i += 2){
             sendToClient(jogadores[i].clt_skt, message);
         }
 
@@ -442,7 +451,7 @@ void verificarVencedor(Mesa mesa, int pontosMesa, int rodadaAtual){
 }
 
 void rodada(int jogadas, int rodadaAtual, int jogadorAtual, int pontosMesa){
-    printf("\033[0;31mRodada...\033[0;37m\n");
+    printf("\033[3;90mRodada...\033[0;37m\n");
     
     if (jogadas == NUMERO_PLAYERS){
         verificarVencedor(rodadas[rodadaAtual], pontosMesa, rodadaAtual);
@@ -466,28 +475,31 @@ void rodada(int jogadas, int rodadaAtual, int jogadorAtual, int pontosMesa){
 
 // Funcao que inicia a partida
 void partida(int ultimoJogador){
-    printf("\033[0;31mPartida...\033[0;37m\n");
+    printf("\033[3;90mPartida...\033[0;37m\n");
     
     if (dupla1.pontos >= PONTOS_PARA_VITORIA || dupla2.pontos >= PONTOS_PARA_VITORIA){
         printf("Fim de jogo!\n");
         if (dupla1.pontos >= PONTOS_PARA_VITORIA){
-            // Um for() economizaria linhas mais nao o suficiente para valer a pena
             printf("Dupla 1 venceu!\n");
-            sendToClient(jogadores[0].clt_skt, "2 Voces venceram a partida!\n");
-            sendToClient(jogadores[1].clt_skt, "2 Voces perderam a partida!\n");
-            sendToClient(jogadores[2].clt_skt, "2 Voces venceram a partida!\n");
-            sendToClient(jogadores[3].clt_skt, "2 Voces perderam a partida!\n");
+
+            for (i = 0; i < NUMERO_PLAYERS; i=+2) sendToClient(jogadores[i].clt_skt, "2 Voces venceram a partida!\n");
+            for (i = 1; i < NUMERO_PLAYERS; i=+2) sendToClient(jogadores[i].clt_skt, "2 Voces perderam a partida!\n");
+
         } else {
-            sendToClient(jogadores[0].clt_skt, "2 Voces perderam a partida!\n");
-            sendToClient(jogadores[1].clt_skt, "2 Voces venceram a partida!\n");
-            sendToClient(jogadores[2].clt_skt, "2 Voces perderam a partida!\n");
-            sendToClient(jogadores[3].clt_skt, "2 Voces venceram a partida!\n");
+            printf("Dupla 2 venceu!\n");
+
+            for (i = 0; i < NUMERO_PLAYERS; i=+2) sendToClient(jogadores[i].clt_skt, "2 Voces perderam a partida!\n");
+            for (i = 1; i < NUMERO_PLAYERS; i=+2) sendToClient(jogadores[i].clt_skt, "2 Voces venceram a partida!\n");
+
         }
         exit(0);
     }
+
     int pontosMesa = 0; // Pontos que define se é truco ou nao
+
     embaralhar();
     distribuir(0);
+
     // Printa as cartas de cada jogador no servidor e envia para os clientes
     for (i = 0; i < NUMERO_PLAYERS; i++){
         char message[500];
@@ -538,7 +550,7 @@ int main() {
         exit(EXIT_FAILURE);
     }
     
-    printf("Servidor esperando por conexões...\n\n");
+    printf("\033[3;90mServidor esperando por conexões...\033[0;37m\n\n");
     
     // Aceitar até 4 clientes
     int client_sockets[NUMERO_PLAYERS];
@@ -553,12 +565,13 @@ int main() {
         jogadores[i].clt_skt = new_socket;
     }
 
-    system("clear");
+    // system("clear");
 
     // Receber dados dos clientes e imprimir na tela
     for (int i = 0; i < NUMERO_PLAYERS; ++i) {
+        char buffer[MAX_BUFFER_SIZE] = {0};
         valread = read(client_sockets[i], buffer, sizeof(buffer));
-        printf("Cliente %d: %s\n", i+1, buffer);
+        printf("Client %d: %s\n", i+1, buffer);
         strcpy(jogadores[i].nome, buffer);
     }
     printf("\n");
@@ -566,6 +579,7 @@ int main() {
     gerarBaralho();
     
     definirDuplas(jogadores);
+
     partida(0);
 
     return 0;
