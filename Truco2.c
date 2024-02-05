@@ -56,6 +56,7 @@ int i, j;
 
 char name_bot[3][STR_SIZE] = {"Jão", "Igão", "Raffão"};
 
+// jogada do bot
 int Bot(Jogador bot){
     return rand() % bot.num_cartas;
 }
