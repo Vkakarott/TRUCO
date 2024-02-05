@@ -43,6 +43,10 @@
     }
 ```
 
+## 
+
+para jogar multyplayer precisa compilar o arquivo cliente.c no computador dos players a mais
+
 ## Autores
 <div align="center">
   <a align="center" href="https://github.com/vkakarott/TRUCO/graphs/contributors">
