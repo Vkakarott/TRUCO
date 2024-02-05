@@ -9,8 +9,7 @@
 ### Features
 <p>Truco online<p>
 
-- [x] Permite jogar online entre amigos
-- [ ] Alterna entre online e single-player
+- [x] Permite jogar singleplayer e multiplayer
 - [x] Conecao LAN com protocolo TCP
 - [x] Totalmente desenvolvido em C
 
