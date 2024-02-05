@@ -54,10 +54,10 @@ Dupla dupla1, dupla2;
 int empate;
 int i, j;
 
-char name_bot[3][STR_SIZE] = {"Bot1", "Bot2", "Bot3"};
+char name_bot[3][STR_SIZE] = {"Jão", "Igão", "Raffão"};
 
-int Bot(){
-    return rand() % 3;
+int Bot(Jogador bot){
+    return rand() % bot.num_cartas;
 }
 
 // Organiza o baralho por ordem de força
@@ -329,7 +329,7 @@ void verificarVencedor(Mesa mesa, int pontosMesa, int rodadaAtual){
         for (i = 1; i < NUMERO_JOGADORES; i++)
             sendToClient(players[i].clt_skt, message);
         
-        strcpy(message, "+");
+        strcpy(message, "0 +");
         char pontosMesaStr[10];
         sprintf(pontosMesaStr, "%d", pontosMesa);
         strcat(message, pontosMesaStr);
@@ -351,7 +351,7 @@ void verificarVencedor(Mesa mesa, int pontosMesa, int rodadaAtual){
         for (i = 1; i < NUMERO_JOGADORES; i++)
             sendToClient(players[i].clt_skt, message);
         
-        strcpy(message, "+");
+        strcpy(message, "0 +");
         char pontosMesaStr[10];
         sprintf(pontosMesaStr, "%d", pontosMesa);
         strcat(message, pontosMesaStr);
@@ -366,14 +366,13 @@ void verificarVencedor(Mesa mesa, int pontosMesa, int rodadaAtual){
 }
 
 // reorganiza a mao do jogador
-void reorganizarMao(Jogador jogador, int indiceSelecionado) {
-    printf("\033[3;90mReorganizando mão...\033[0;37m\n");
-    system("pause");
+Jogador reorganizarMao(Jogador jogador, int indiceSelecionado) {
     for (int i = indiceSelecionado; i < jogador.num_cartas; i++) {
         jogador.mao[i] = jogador.mao[i + 1];
     }
 
     jogador.num_cartas--;
+    return jogador;
 }
 
 void truco(int client_socket,int rodadaAtual, int *pontosMesa){
@@ -389,6 +388,7 @@ void truco(int client_socket,int rodadaAtual, int *pontosMesa){
     switch (*pontosMesa) {
         case 1:
             printf("TRUCO!\n");
+            sleep(2);
 
             strcpy(message, "0 TRUCO!");
             for (i = 1; i < NUMERO_JOGADORES; i++)
@@ -474,6 +474,7 @@ void truco(int client_socket,int rodadaAtual, int *pontosMesa){
 
         case 3:
             printf("SEIS!\n");
+            sleep(2);
 
             strcpy(message, "0 SEIS!");
             for (i = 1; i < NUMERO_JOGADORES; i++)
@@ -559,6 +560,7 @@ void truco(int client_socket,int rodadaAtual, int *pontosMesa){
 
         case 6:
             printf("NOVE!\n");
+            sleep(2);
 
             strcpy(message, "0 NOVE!");
             for (i = 1; i < NUMERO_JOGADORES; i++)
@@ -644,6 +646,7 @@ void truco(int client_socket,int rodadaAtual, int *pontosMesa){
 
         case 9:
             printf("DOZE!\n");
+            sleep(2);
 
             strcpy(message, "0 DOZE!");
             for (i = 1; i < NUMERO_JOGADORES; i++)
@@ -726,10 +729,11 @@ void jogada(int client_socket, int rodadaAtual, int *pontosMesa) {
 
         scanf("%d", &j);
 
-        if (j == 0) truco(client_socket, rodadaAtual, &pontosMesa);
-        else {
+        if (j) { 
             rodadas[rodadaAtual].rodada[client_socket] = players[0].mao[j-1];
-            reorganizarMao(players[0], j-1);
+            players[0] = reorganizarMao(players[0], j-1);
+        } else {
+            truco(client_socket, rodadaAtual, &pontosMesa);
         }
 
     } else if (!players[client_socket].bot) {
@@ -749,20 +753,20 @@ void jogada(int client_socket, int rodadaAtual, int *pontosMesa) {
             strcat(message, " | ");
         }
         sendToClient(players[client_socket].clt_skt, message);
-        printf("033[3;90mAguardando jogada...\033[0;37m\n");
+        printf("\033[3;90mAguardando jogada...\033[0;37m\n");
         char *player_choice = receiveFromClient(players[client_socket].clt_skt);
         int player_choice_int = player_choice[0] - '0';
         if(player_choice_int == 0) truco(client_socket, rodadaAtual, &pontosMesa);
         else {
             rodadas[rodadaAtual].rodada[client_socket] = players[client_socket].mao[player_choice_int-1];
-            reorganizarMao(players[client_socket], player_choice_int-1);
+            players[client_socket] = reorganizarMao(players[client_socket], player_choice_int-1);
         }
         free(player_choice);
     } else {
         printf("Vez de %s\n", players[client_socket].name);
-        int choice = Bot(client_socket, rodadaAtual, pontosMesa);
+        int choice = Bot(players[client_socket]);
         rodadas[rodadaAtual].rodada[client_socket] = players[client_socket].mao[choice];
-        reorganizarMao(players[client_socket], choice);
+        players[client_socket] = reorganizarMao(players[client_socket], choice);
     }
 }
 
