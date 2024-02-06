@@ -43,9 +43,20 @@
     }
 ```
 
-## 
+## Como jogar
 
-para jogar multyplayer precisa compilar o arquivo cliente.c no computador dos players a mais
+Para baixar o jogo e entrar na pasta do jogo, deve-se digitar o seguinte comando no terminal:
+```bash
+git clone https://github.com/Vkakarott/TRUCO && cd TRUCO
+```
+O jogador 1 deve rodar o seguinte comando no terminal:
+```bash
+gcc Truco2.c -o "Truco2.exe" && ./Truco2.exe 
+```
+Os demais jogadores devem também usar o primeiro comando e então usar o seguinte comando:
+```bash
+gcc client.c -o "client.exe" && ./client.exe 
+```
 
 ## Autores
 <div align="center">
